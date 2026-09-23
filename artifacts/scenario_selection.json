@@ -1,0 +1,95 @@
+{
+  "eligibility_rules": {
+    "min_test_events": 100,
+    "min_test_nonzero_bins": 12,
+    "min_test_nonzero_fraction": 0.02,
+    "min_train_events": 500,
+    "min_train_nonzero_bins": 24,
+    "min_train_service_samples": 500,
+    "min_train_unique_positive_counts": 3,
+    "min_validation_events": 100,
+    "min_validation_nonzero_bins": 12,
+    "min_validation_nonzero_fraction": 0.02
+  },
+  "eligible_application_count": 19,
+  "filtering": {
+    "final_rows": 1809618,
+    "original_rows": 1980951,
+    "removed": {
+      "invalid_demand_timestamp": 0,
+      "invalid_duration": 171333,
+      "invalid_end_timestamp": 0,
+      "invalid_id": 0
+    }
+  },
+  "scenario_diagnostics": {
+    "bursty": {
+      "eligible": true,
+      "ineligible_reasons": [],
+      "test_events": 346,
+      "test_nonzero_bins": 25,
+      "test_nonzero_fraction": 0.031017369727047148,
+      "train_events": 898,
+      "train_nonzero_bins": 68,
+      "train_service_samples": 898,
+      "train_unique_positive_counts": 13,
+      "validation_events": 576,
+      "validation_nonzero_bins": 43,
+      "validation_nonzero_fraction": 0.05328376703841388
+    },
+    "diurnal": {
+      "eligible": true,
+      "ineligible_reasons": [],
+      "test_events": 1346,
+      "test_nonzero_bins": 805,
+      "test_nonzero_fraction": 0.9987593052109182,
+      "train_events": 4033,
+      "train_nonzero_bins": 2420,
+      "train_service_samples": 4033,
+      "train_unique_positive_counts": 3,
+      "validation_events": 1344,
+      "validation_nonzero_bins": 807,
+      "validation_nonzero_fraction": 1.0
+    },
+    "high_volume": {
+      "eligible": true,
+      "ineligible_reasons": [],
+      "test_events": 76276,
+      "test_nonzero_bins": 288,
+      "test_nonzero_fraction": 0.3573200992555831,
+      "train_events": 345624,
+      "train_nonzero_bins": 1177,
+      "train_service_samples": 345624,
+      "train_unique_positive_counts": 490,
+      "validation_events": 113767,
+      "validation_nonzero_bins": 430,
+      "validation_nonzero_fraction": 0.5328376703841388
+    }
+  },
+  "scenarios": {
+    "bursty": {
+      "app": "a9fd6223e00378edd60a03c721f9345f34d198757a4057b349d0e85e3aa111b2",
+      "autocorr": 0.42684976436355704,
+      "burst": 37.72828497627789,
+      "events": 898
+    },
+    "diurnal": {
+      "app": "f7bfe5bc8d2a37a5c15986fbfc2c477a746e866adcb9663f9df7535b61c3eb9b",
+      "autocorr": 0.9895663987142984,
+      "burst": 1.1995043363314,
+      "events": 4033
+    },
+    "high_volume": {
+      "app": "a594f92f84072b4cd031fe5283d1781a6e98f430696dec0a8e3b02eadb5fc0b8",
+      "autocorr": 0.0683032908769265,
+      "burst": 4.252814548916458,
+      "events": 345624
+    }
+  },
+  "source": "official_azure_2021",
+  "time_bounds": {
+    "maximum": 1209599.6934639686,
+    "minimum": 0.0014909000396727962,
+    "train_end": 725759.8166747411
+  }
+}

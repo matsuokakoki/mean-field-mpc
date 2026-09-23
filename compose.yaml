@@ -1,0 +1,24 @@
+services:
+  lock:
+    image: ghcr.io/astral-sh/uv:0.8.14-python3.12-bookworm-slim
+    working_dir: /workspace
+    volumes:
+      - .:/workspace
+    command: uv lock
+    environment:
+      UV_LINK_MODE: copy
+  research:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    working_dir: /workspace
+    volumes:
+      - .:/workspace
+    environment:
+      UV_PROJECT_ENVIRONMENT: /opt/venv
+      UV_LINK_MODE: copy
+      PYTHONHASHSEED: "0"
+      MPLBACKEND: Agg
+      LANG: C.UTF-8
+      LC_ALL: C.UTF-8
+

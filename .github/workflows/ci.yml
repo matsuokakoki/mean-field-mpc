@@ -1,0 +1,14 @@
+name: ci
+on:
+  push:
+  pull_request:
+jobs:
+  quality:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: docker compose build research
+      - run: docker compose run --rm research uv run ruff format --check .
+      - run: docker compose run --rm research uv run ruff check .
+      - run: docker compose run --rm research uv run mypy src
+      - run: docker compose run --rm research uv run pytest -q --cov=mfcontrol --cov-report=term-missing

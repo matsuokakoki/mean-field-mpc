@@ -1,0 +1,9 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite this repository."
+title: "Uncertainty-Aware Mean-Field Capacity Control for Bursty Serverless Workloads"
+type: software
+authors:
+  - family-names: "Repository contributors"
+version: 0.1.0
+date-released: 2026-08-31
+license: MIT

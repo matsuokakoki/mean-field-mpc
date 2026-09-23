@@ -1,0 +1,61 @@
+profile: smoke
+seed: 1729
+seeds: [1729, 1730]
+data:
+  source_url: https://github.com/Azure/AzurePublicDataset/raw/master/data/AzureFunctionsInvocationTraceForTwoWeeksJan2021.rar
+  bin_seconds: 300
+  synthetic_if_missing: true
+  force_synthetic_fixture: true
+  synthetic_bins: 720
+  scenario_eligibility:
+    min_train_events: 50
+    min_validation_events: 20
+    min_test_events: 20
+    min_validation_nonzero_bins: 4
+    min_test_nonzero_bins: 4
+    min_validation_nonzero_fraction: 0.02
+    min_test_nonzero_fraction: 0.02
+    min_train_service_samples: 50
+    min_train_nonzero_bins: 12
+    min_train_unique_positive_counts: 3
+forecast:
+  horizons: [1, 2, 3]
+  max_train: 180
+  gp_restarts: 0
+  ewma_alpha: 0.3
+control:
+  n: 25
+  d: 2
+  min_fraction: 0.08
+  ramp_fraction: 0.20
+  activation_delay_bins: 1
+  horizon: 3
+  rho_max: 0.995
+  rho_static: 0.75
+  rho_reactive: 0.70
+  target_mean_utilization: 0.65
+  alpha_grid: [0.03, 0.3, 3.0]
+  alpha_search:
+    min_alpha: 0.001
+    max_alpha: 100.0
+    initial_points: 7
+    max_refinements: 8
+    relative_tolerance: 0.05
+  queue_weight: 1.0
+  switching_weight: 0.05
+  capacity_step: 1
+simulation:
+  workers: 2
+  service_models: [exponential_matched, empirical]
+  evaluation_bins: 24
+  max_events_per_bin: 350
+  min_jobs_for_tail_metric: 30
+meanfield:
+  workers: 2
+  n_values: [25, 50]
+  rho_values: [0.5, 0.9]
+  d_values: [1, 2]
+  tail_tolerance: 1.0e-12
+  tail_max: 10000
+  warmup_time: 200.0
+  measurement_time: 400.0
