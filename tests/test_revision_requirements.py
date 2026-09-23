@@ -150,12 +150,20 @@ def test_paired_ewma_effect_uses_seed_pairs_and_human_sign_wording() -> None:
         rows.extend(
             [
                 {
-                    "experiment": "primary", "scenario": "high_volume", "controller": "reactive", "seed": seed,
-                    "p95_wait": reactive, "mean_resource_fraction": 0.50,
+                    "experiment": "primary",
+                    "scenario": "high_volume",
+                    "controller": "reactive",
+                    "seed": seed,
+                    "p95_wait": reactive,
+                    "mean_resource_fraction": 0.50,
                 },
                 {
-                    "experiment": "primary", "scenario": "high_volume", "controller": "ewma_mf_mpc", "seed": seed,
-                    "p95_wait": ewma, "mean_resource_fraction": 0.505,
+                    "experiment": "primary",
+                    "scenario": "high_volume",
+                    "controller": "ewma_mf_mpc",
+                    "seed": seed,
+                    "p95_wait": ewma,
+                    "mean_resource_fraction": 0.505,
                 },
             ]
         )

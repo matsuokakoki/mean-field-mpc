@@ -82,7 +82,14 @@ def _comparison_specs() -> tuple[tuple[str, str, str, str, str, str], ...]:
     return (
         ("high_volume_ewma_reactive", "high_volume", "ewma_mf_mpc", "reactive", "EWMA MF-MPC", "reactive control"),
         ("high_volume_ucb_reactive", "high_volume", "gp_ucb_mf_mpc", "reactive", "GP-UCB MF-MPC", "reactive control"),
-        ("high_volume_ucb_gp_mean", "high_volume", "gp_ucb_mf_mpc", "gp_mean_mf_mpc", "GP-UCB MF-MPC", "GP-mean MF-MPC"),
+        (
+            "high_volume_ucb_gp_mean",
+            "high_volume",
+            "gp_ucb_mf_mpc",
+            "gp_mean_mf_mpc",
+            "GP-UCB MF-MPC",
+            "GP-mean MF-MPC",
+        ),
         ("bursty_ucb_gp_mean", "bursty", "gp_ucb_mf_mpc", "gp_mean_mf_mpc", "GP-UCB MF-MPC", "GP-mean MF-MPC"),
     )
 
@@ -96,26 +103,48 @@ def _claims(metrics: pd.DataFrame, metadata: dict[str, Any]) -> tuple[str, dict[
         comparator_status = _match_status(metadata, scenario, comparator)
         strict = treatment_status == "matched" and comparator_status in {"matched", "reference"}
         tolerance = float(metadata["controllers"][scenario]["budget_match"].get(treatment, {}).get("tolerance", 0.02))
-        effect.update({"treatment_match_status": treatment_status, "comparator_match_status": comparator_status, "strict_matched_budget": strict, "matching_tolerance": tolerance})
+        effect.update(
+            {
+                "treatment_match_status": treatment_status,
+                "comparator_match_status": comparator_status,
+                "strict_matched_budget": strict,
+                "matching_tolerance": tolerance,
+            }
+        )
         effects[key] = effect
         prefix = "Strict matched-budget result: " if strict else "Descriptive, not strict matched-budget: "
         wording = _sentence(effect, treatment_label, comparator_label)
-        blocks.extend([
-            f"## {scenario}: {treatment_label} versus {comparator_label}", "",
-            f"Claim: {prefix}{wording}", "",
-            f"Metric definition: {effect['metric']}; percent reduction is {effect['formula']}.", "",
-            f"Configuration: `configs/paper.yaml`; primary empirical-service experiment. Scenario: `{scenario}`.", "",
-            "Artifact source: `results/controller_metrics_per_seed.csv`, `results/paired_controller_comparisons.csv`, and `results/selected_hyperparameters.json`.", "",
-            f"Seeds: {effect['seeds']}. Matching: treatment={treatment_status}; comparator={comparator_status}; configured tolerance={100 * tolerance:.0f}%.", "",
-            f"Point estimate: percent reduction = {effect.get('point_estimate_percent_reduction', float('nan')):.3f}%; 95% CI = [{effect.get('ci95_low_percent_reduction', float('nan')):.3f}%, {effect.get('ci95_high_percent_reduction', float('nan')):.3f}%].", "",
-            f"Resource fractions: treatment={effect.get('treatment_resource_fraction', float('nan')):.4f}; comparator={effect.get('comparator_resource_fraction', float('nan')):.4f}; relative mismatch={100 * effect.get('relative_resource_mismatch', float('nan')):.3f}%.", "",
-            f"Allowed wording: {prefix}{wording}", "",
-            "Forbidden stronger wording: production superiority, equal-cost superiority when unmatched, or any statement that uses test data for tuning.", "",
-        ])
+        blocks.extend(
+            [
+                f"## {scenario}: {treatment_label} versus {comparator_label}",
+                "",
+                f"Claim: {prefix}{wording}",
+                "",
+                f"Metric definition: {effect['metric']}; percent reduction is {effect['formula']}.",
+                "",
+                f"Configuration: `configs/paper.yaml`; primary empirical-service experiment. Scenario: `{scenario}`.",
+                "",
+                "Artifact source: `results/controller_metrics_per_seed.csv`, `results/paired_controller_comparisons.csv`, and `results/selected_hyperparameters.json`.",
+                "",
+                f"Seeds: {effect['seeds']}. Matching: treatment={treatment_status}; comparator={comparator_status}; configured tolerance={100 * tolerance:.0f}%.",
+                "",
+                f"Point estimate: percent reduction = {effect.get('point_estimate_percent_reduction', float('nan')):.3f}%; 95% CI = [{effect.get('ci95_low_percent_reduction', float('nan')):.3f}%, {effect.get('ci95_high_percent_reduction', float('nan')):.3f}%].",
+                "",
+                f"Resource fractions: treatment={effect.get('treatment_resource_fraction', float('nan')):.4f}; comparator={effect.get('comparator_resource_fraction', float('nan')):.4f}; relative mismatch={100 * effect.get('relative_resource_mismatch', float('nan')):.3f}%.",
+                "",
+                f"Allowed wording: {prefix}{wording}",
+                "",
+                "Forbidden stronger wording: production superiority, equal-cost superiority when unmatched, or any statement that uses test data for tuning.",
+                "",
+            ]
+        )
         if key == "high_volume_ewma_reactive":
-            blocks.extend([
-                "Matching status was determined on validation only; reported resource fractions below are test-set means.", "",
-            ])
+            blocks.extend(
+                [
+                    "Matching status was determined on validation only; reported resource fractions below are test-set means.",
+                    "",
+                ]
+            )
     return "\n".join(blocks), effects
 
 
@@ -129,21 +158,38 @@ def _claims_japanese(effects: dict[str, dict[str, Any]]) -> str:
     }
     for key, effect in effects.items():
         scenario, treatment, comparator = labels[key]
-        status = "厳密なmatched-budget結果" if effect.get("strict_matched_budget") else "厳密なmatched-budgetではない記述的結果"
-        blocks.extend([
-            f"## {scenario}: {treatment} 対 {comparator}", "",
-            f"Claim: {status}。{_japanese_sentence(effect, treatment, comparator)}", "",
-            "指標: seedごとのpaired p95 simulated waiting time。percent reduction = 100 × (比較対象 − treatment) / 比較対象。", "",
-            f"seed数: {effect.get('seeds', 0)}。matching status: treatment={effect.get('treatment_match_status')}, comparator={effect.get('comparator_match_status')}。許容差: 2%。", "",
-            f"resource fraction: treatment={effect.get('treatment_resource_fraction', float('nan')):.4f}, comparator={effect.get('comparator_resource_fraction', float('nan')):.4f}。相対差={100 * effect.get('relative_resource_mismatch', float('nan')):.3f}%。", "",
-            "出典: `results/controller_metrics_per_seed.csv`, `results/paired_controller_comparisons.csv`, `results/selected_hyperparameters.json`。", "",
-            "禁止する表現: 本番優位性、未一致比較を同一コスト優位性と呼ぶこと、testデータでの調整を示唆すること。", "",
-        ])
+        status = (
+            "厳密なmatched-budget結果"
+            if effect.get("strict_matched_budget")
+            else "厳密なmatched-budgetではない記述的結果"
+        )
+        blocks.extend(
+            [
+                f"## {scenario}: {treatment} 対 {comparator}",
+                "",
+                f"Claim: {status}。{_japanese_sentence(effect, treatment, comparator)}",
+                "",
+                "指標: seedごとのpaired p95 simulated waiting time。percent reduction = 100 × (比較対象 − treatment) / 比較対象。",
+                "",
+                f"seed数: {effect.get('seeds', 0)}。matching status: treatment={effect.get('treatment_match_status')}, comparator={effect.get('comparator_match_status')}。許容差: 2%。",
+                "",
+                f"resource fraction: treatment={effect.get('treatment_resource_fraction', float('nan')):.4f}, comparator={effect.get('comparator_resource_fraction', float('nan')):.4f}。相対差={100 * effect.get('relative_resource_mismatch', float('nan')):.3f}%。",
+                "",
+                "出典: `results/controller_metrics_per_seed.csv`, `results/paired_controller_comparisons.csv`, `results/selected_hyperparameters.json`。",
+                "",
+                "禁止する表現: 本番優位性、未一致比較を同一コスト優位性と呼ぶこと、testデータでの調整を示唆すること。",
+                "",
+            ]
+        )
         if key == "high_volume_ewma_reactive":
-            blocks.extend([
-                "Matching status was determined on validation only; reported resource fractions below are test-set means。", "",
-                "マッチング判定はvalidationデータだけで決定し、報告したresource fractionはtest-set平均である。", "",
-            ])
+            blocks.extend(
+                [
+                    "Matching status was determined on validation only; reported resource fractions below are test-set means。",
+                    "",
+                    "マッチング判定はvalidationデータだけで決定し、報告したresource fractionはtest-set平均である。",
+                    "",
+                ]
+            )
     return "\n".join(blocks)
 
 
@@ -163,28 +209,41 @@ def _write_effects(effects: dict[str, dict[str, Any]], output_dir: Path) -> None
     pd.DataFrame(effects.values()).to_csv(output_dir / "paired_controller_comparisons.csv", index=False)
 
 
-def _tables(summary: pd.DataFrame, forecast: pd.DataFrame, metadata: dict[str, Any], effects: dict[str, dict[str, Any]]) -> None:
+def _tables(
+    summary: pd.DataFrame, forecast: pd.DataFrame, metadata: dict[str, Any], effects: dict[str, dict[str, Any]]
+) -> None:
     generated = Path("paper/generated")
     generated.mkdir(parents=True, exist_ok=True)
     primary = summary[(summary["experiment"] == "primary") & (summary["metric"] == "p95_wait")]
     rows = []
     for _, row in primary.sort_values(["scenario", "controller"]).iterrows():
         status = _match_status(metadata, str(row["scenario"]), str(row["controller"]))
-        rows.append(f"{_latex(row['scenario'])} & {_latex(row['controller'])} & {row['mean']:.3g} & [{row['ci95_low']:.3g}, {row['ci95_high']:.3g}] & {_latex(status)} " + r"\\")
+        rows.append(
+            f"{_latex(row['scenario'])} & {_latex(row['controller'])} & {row['mean']:.3g} & [{row['ci95_low']:.3g}, {row['ci95_high']:.3g}] & {_latex(status)} "
+            + r"\\"
+        )
     (generated / "primary_rows.tex").write_text("\n".join(rows), encoding="utf-8")
     point = forecast[forecast["method"] != "gp_ucb"]
-    rows = [f"{_latex(row.method)} & {row.mae:.3g} & {row.rmse:.3g} " + r"\\" for row in point.groupby("method", as_index=False)[["mae", "rmse"]].mean().itertuples(index=False)]
+    rows = [
+        f"{_latex(row.method)} & {row.mae:.3g} & {row.rmse:.3g} " + r"\\"
+        for row in point.groupby("method", as_index=False)[["mae", "rmse"]].mean().itertuples(index=False)
+    ]
     (generated / "forecast_rows.tex").write_text("\n".join(rows), encoding="utf-8")
-    ucb = forecast[forecast["method"] == "gp_ucb"][["upper_coverage", "underprediction_rate", "average_log_width", "normalized_upper_width"]].mean()
-    (generated / "ucb_rows.tex").write_text(f"GP-UCB & {ucb['upper_coverage']:.3f} & {ucb['underprediction_rate']:.3f} & {ucb['average_log_width']:.3g} & {ucb['normalized_upper_width']:.3g} " + r"\\", encoding="utf-8")
-    ewma = effects["high_volume_ewma_reactive"]
-    (generated / "ewma_result.tex").write_text(
-        f"{ewma['point_estimate_percent_reduction']:.1f}\\% & [{ewma['ci95_low_percent_reduction']:.1f}, {ewma['ci95_high_percent_reduction']:.1f}]\\% & {ewma['treatment_resource_fraction']:.3f} & {ewma['comparator_resource_fraction']:.3f} & {100 * ewma['relative_resource_mismatch']:.2f}\\% " + r"\\",
+    ucb = forecast[forecast["method"] == "gp_ucb"][
+        ["upper_coverage", "underprediction_rate", "average_log_width", "normalized_upper_width"]
+    ].mean()
+    (generated / "ucb_rows.tex").write_text(
+        f"GP-UCB & {ucb['upper_coverage']:.3f} & {ucb['underprediction_rate']:.3f} & {ucb['average_log_width']:.3g} & {ucb['normalized_upper_width']:.3g} "
+        + r"\\",
         encoding="utf-8",
     )
-    robustness = summary[
-        (summary["experiment"] == "high_volume_delay_robustness") & (summary["metric"] == "p95_wait")
-    ]
+    ewma = effects["high_volume_ewma_reactive"]
+    (generated / "ewma_result.tex").write_text(
+        f"{ewma['point_estimate_percent_reduction']:.1f}\\% & [{ewma['ci95_low_percent_reduction']:.1f}, {ewma['ci95_high_percent_reduction']:.1f}]\\% & {ewma['treatment_resource_fraction']:.3f} & {ewma['comparator_resource_fraction']:.3f} & {100 * ewma['relative_resource_mismatch']:.2f}\\% "
+        + r"\\",
+        encoding="utf-8",
+    )
+    robustness = summary[(summary["experiment"] == "high_volume_delay_robustness") & (summary["metric"] == "p95_wait")]
     robustness_rows = []
     for delay, group in robustness.groupby("delay_bins"):
         indexed = group.set_index("controller")
@@ -197,13 +256,15 @@ def _tables(summary: pd.DataFrame, forecast: pd.DataFrame, metadata: dict[str, A
     (generated / "high_volume_delay_rows.tex").write_text("\n".join(robustness_rows), encoding="utf-8")
 
 
-def _write_report(effects: dict[str, dict[str, Any]], summary: pd.DataFrame, forecast: pd.DataFrame, metadata: dict[str, Any]) -> None:
+def _write_report(
+    effects: dict[str, dict[str, Any]], summary: pd.DataFrame, forecast: pd.DataFrame, metadata: dict[str, Any]
+) -> None:
     _tables(summary, forecast, metadata, effects)
     ewma = effects["high_volume_ewma_reactive"]
     ucb = effects["high_volume_ucb_reactive"]
     ewma_sentence = _latex(_sentence(ewma, "EWMA MF-MPC", "reactive control"))
     ucb_sentence = _latex(_sentence(ucb, "GP-UCB MF-MPC", "reactive control"))
-    report = rf'''\documentclass[10pt]{{article}}
+    report = rf"""\documentclass[10pt]{{article}}
 \usepackage[margin=0.74in]{{geometry}}
 \usepackage{{amsmath,amssymb,booktabs,graphicx,microtype}}
 \graphicspath{{{{../figures/pdf/}}}}
@@ -269,7 +330,7 @@ The Japanese report and Japanese claim translations are provided in \texttt{{pap
 \bibliographystyle{{plain}}
 \bibliography{{references}}
 \end{{document}}
-'''
+"""
     Path("paper/report.tex").write_text(report, encoding="utf-8")
 
 
@@ -278,7 +339,8 @@ def _write_docs(effects: dict[str, dict[str, Any]]) -> None:
     ucb = effects["high_volume_ucb_reactive"]
     ewma_sentence = _sentence(ewma, "EWMA MF-MPC", "reactive control")
     ucb_sentence = _sentence(ucb, "GP-UCB MF-MPC", "reactive control")
-    Path("README.md").write_text(f'''# Mean-Field Capacity Control for Production-Derived Serverless Workloads
+    Path("README.md").write_text(
+        f"""# Mean-Field Capacity Control for Production-Derived Serverless Workloads
 
 Docker-reproducible finite-$N$ queue simulations and quasi-stationary mean-field MPC using public Azure Functions workload shapes.
 
@@ -297,8 +359,11 @@ Get-Content .\\artifacts\\progress.json
 ```
 
 Results are in `results/`, figures in `figures/`, the paper is `paper/report.pdf`, and the claim ledger is `docs/CLAIMS.md`.
-''', encoding="utf-8")
-    Path("paper/report_ja.md").write_text('''# Mean-Field Capacity Control：日本語報告
+""",
+        encoding="utf-8",
+    )
+    Path("paper/report_ja.md").write_text(
+        """# Mean-Field Capacity Control：日本語報告
 
 ## 概要
 
@@ -315,16 +380,22 @@ burstyではGP-UCBはGP-meanに対してp95待ち時間に明確な差を示さ�
 ## 方法上の注意
 
 シナリオ適格性は、以前の退化したheld-out分割を発見した後、controller再評価前に固定した。学習・validation・testを時系列分割し、GP fittingは学習、beta校正とresource matchingはvalidationだけで行い、testは設定固定後の評価にのみ使用した。詳細な数式・図・再現手順は英語PDFと`docs/RESEARCH_PROTOCOL.md`に記載する。
-''', encoding="utf-8")
-    Path("docs/RESEARCH_PROTOCOL.md").write_text("""# Research protocol
+""",
+        encoding="utf-8",
+    )
+    Path("docs/RESEARCH_PROTOCOL.md").write_text(
+        """# Research protocol
 
 For the revised analysis, split-level data-quality eligibility criteria were fixed before rerunning controller evaluation after a degenerate held-out bursty scenario was found. Criteria in `configs/paper.yaml` require activity in all chronological splits and are evaluated before controller testing. Ranking among eligible applications uses training statistics only; validation/test data never choose an eligible application.
 
 Forecasts are causal and fitted on training rows. GP beta calibration uses validation only. Reactive validation resource fraction is the reference budget; each predictive controller receives adaptive log-space alpha search on validation only and is strict-headline eligible only within the configured two-percent tolerance. Test data never select scenarios, beta, alpha, or model settings.
 
 Tail metrics require the configured minimum number of generated jobs. Missing tail evidence is `insufficient_data`/NA, never zero. Controllers share paired seeds; paired claims bootstrap per-seed percentage reductions. The JSQ simulator validates job conservation, delayed warming, draining, nonnegative waiting, and response at least service duration.
-""", encoding="utf-8")
-    Path("docs/DEVIATIONS.md").write_text("""# Deviations and methodological updates
+""",
+        encoding="utf-8",
+    )
+    Path("docs/DEVIATIONS.md").write_text(
+        """# Deviations and methodological updates
 
 - The original bursty test split was empty. For the revised analysis, split-level eligibility criteria were fixed before rerunning controller evaluation and applied before training-only workload ranking.
 - Coarse alpha selection was replaced by adaptive validation-only log-space resource matching. Unmatched discrete points stay in Pareto results but are excluded from strict claims.
@@ -332,8 +403,11 @@ Tail metrics require the configured minimum number of generated jobs. Missing ta
 - Tail metrics with too few jobs are NA with a reason, never zero.
 - The public Azure RAR5 archive is extracted inside Docker using pinned 7-Zip.
 - A representative-event cap can weight high-count bins; it preserves offered work but weakens individual-job tail interpretation and is recorded in the manifest.
-""", encoding="utf-8")
-    Path("docs/LIMITATIONS.md").write_text("""# Limitations
+""",
+        encoding="utf-8",
+    )
+    Path("docs/LIMITATIONS.md").write_text(
+        """# Limitations
 
 - Arrival time is reconstructed as `end_timestamp - duration`.
 - Workload shapes are production-derived, but simulation intensities are scaled; finite-$N$ simulation is not Azure deployment.
@@ -341,18 +415,26 @@ Tail metrics require the configured minimum number of generated jobs. Missing ta
 - Empirical service simulation is intentional model mismatch.
 - GP fitting may subsample for tractability, and only three representative scenarios are studied.
 - Discrete capacity can prevent exact resource matching. Unmatched GP-UCB comparisons cannot establish equal-cost superiority.
-""", encoding="utf-8")
-    Path("docs/REPRODUCIBILITY.md").write_text("""# Reproducibility
+""",
+        encoding="utf-8",
+    )
+    Path("docs/REPRODUCIBILITY.md").write_text(
+        """# Reproducibility
 
 Docker Compose is the only host requirement. Run `python -m mfcontrol reproduce --profile paper` inside the research service. The bind-mounted pipeline writes timestamped `logs/reproduce_<timestamp>.log`, append-only `logs/events.jsonl`, and atomic `artifacts/progress.json`. `results/result_manifest.json` records code/config/lock hashes; `results/paired_controller_comparisons.csv` stores paired effect evidence. Raw Azure data is gitignored.
-""", encoding="utf-8")
-    Path("artifacts/CV_BULLETS.md").write_text("""# CV wording
+""",
+        encoding="utf-8",
+    )
+    Path("artifacts/CV_BULLETS.md").write_text(
+        """# CV wording
 
 - Built a Docker-reproducible applied-mathematics study combining finite-$N$ JSQ queueing, mean-field fixed points, Gaussian-process uncertainty, and receding-horizon capacity control on public production-derived workload shapes.
 - Implemented train/validation/test-isolated selection, validation-only resource matching, paired simulation, and artifact-backed conservative claims.
 
 All results are controlled simulations, not a production deployment claim.
-""", encoding="utf-8")
+""",
+        encoding="utf-8",
+    )
 
 
 def build_report(config: dict[str, Any], config_path: Path, output_dir: Path) -> None:
@@ -368,5 +450,7 @@ def build_report(config: dict[str, Any], config_path: Path, output_dir: Path) ->
     _write_report(effects, summary, forecast, metadata)
     _write_docs(effects)
     build_manifest(config, config_path, output_dir)
-    subprocess.run(["latexmk", "-pdf", "-interaction=nonstopmode", "-halt-on-error", "report.tex"], cwd="paper", check=True)
+    subprocess.run(
+        ["latexmk", "-pdf", "-interaction=nonstopmode", "-halt-on-error", "report.tex"], cwd="paper", check=True
+    )
     Path("paper/report_en.pdf").write_bytes(Path("paper/report.pdf").read_bytes())

@@ -8,7 +8,6 @@ from matplotlib import font_manager
 from matplotlib.backends.backend_pdf import PdfPages
 from matplotlib.figure import Figure
 
-
 ROOT = Path(__file__).resolve().parents[1]
 SOURCE = ROOT / "paper" / "report_ja.md"
 OUTPUT = ROOT / "paper" / "report_ja.pdf"
@@ -41,7 +40,9 @@ def _wrap(text: str, width: int) -> list[str]:
         token_width = sum(
             min(0.5 if char.isascii() else 1.0, 0.7)
             if unicodedata.category(char).startswith("P")
-            else 0.5 if char.isascii() else 1.0
+            else 0.5
+            if char.isascii()
+            else 1.0
             for char in token
         )
         if current_width + token_width > width and current:
